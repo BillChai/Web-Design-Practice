@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<title>教育システムデザイン第7回</title>
+</head>
+
+<body>
+	<h1>教育システムデザイン　第7回</h1>
+	<canvas id="myCanvas" width="600" height="400"></canvas>
+
+	<br>
+	<input type="button" id="btnAnime" value="Start Animation" onclick="startAnime()">
+	<input type="button" id="btnStep" value="One Step Foward" onclick="stepOnce()">
+	<input type="button" id="reAnime" value="Reset Animation" onclick="init()">
+
+	<script>
+
+		const canvas = document.getElementById('myCanvas');
+		const ctx = canvas.getContext('2d');
+
+		let ball;		//ball物件配列
+		//let x, y; //球得中心座標
+		//let vx, vy; // 球速
+		const RADIUS = 20; //半徑
+		const g = 9.8;    // 重力
+		const E = 1;	//碰撞係數
+		const STEP = 0.1; //時間刻度
+
+		let time;		//經過時間
+		//let xData, yData;		//座標資料
+		const MAX_DATA = 300;	//座標資料數
+
+		let animeOnce;
+		let anime = false; //animation flag
+
+		//複數球生成
+		function Ball(x, y, vx, vy, color) {
+			this.x = x;
+			this.y = y;
+			this.vx = vx;
+			this.vy = vy;
+			this.r = RADIUS;
+			this.xData = [x];
+			this.yData = [y];
+			this.color = color;
+
+		}
+
+		// let ballA = new Ball(100,100,20,-20);
+		// let ballB = new Ball(100,100,20,-20);
+		// ballA.x = 10;
+
+		function init() {
+			anime = false;
+			animeOnce = false;
+			time = 0;
+			ball = [];
+			ball.push(new Ball(100, 100, 20, -20, 'red'));
+			ball.push(new Ball(100, 100, 20, -25, 'green'));
+			ball.push(new Ball(100, 100, 20, 0, 'blue'));
+
+			// x = 100; y = 100; vx = 20; vy = -20;
+			// xData = [x]; yData = [y];
+
+			document.getElementById('btnAnime').vale = "Start Animation";
+			document.getElementById('btnStep').disabled = false;
+			draw();
+		}
+
+
+		function draw() {
+
+			//canvas reset
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+			//畫線
+			ctx.strokeStyle = 'black';
+			ctx.strokeRect(0, 0, canvas.width, canvas.height);
+
+			//園
+			for (let n = 0; n < ball.length; n++) {
+				ctx.strokeStyle = ball[n].color;
+				ctx.beginPath();
+				ctx.arc(ball[n].x, ball[n].y, ball[n].r, 0, 2 * Math.PI);
+				ctx.stroke();
+			}
+
+			//線狀軌跡描畫
+			// for (let n = 0; n < ball.length; n++) {
+			// 	ctx.strokeStyle = ball[n].color
+			// 	ctx.beginPath();
+			// 	ctx.moveTo(ball[n].xData[0], ball[n].yData[0]);
+			// 	for (let i = 1; i < ball[n].xData.length; i++) {
+			// 		// ctx.beginPath();
+			// 		// ctx.arc(ball[n].xData[i], ball[n].yData[i], ball[n].r, 0, 2 * Math.PI);
+			// 		// ctx.stroke();
+
+			// 		ctx.lineTo(ball[n].xData[i], ball[n].yData[i]);
+			// 	}
+			// 	ctx.stroke();
+			// }
+
+			//課題一
+			//一定時間間隔でのボール形状の軌跡描画（重心ではなく円を描画する）
+			//時間間隔= 10*STEP
+			//ctx.moveTo(xData[0], yData[0]);
+
+			// for (let n = 0; n < ball.length; n++) {
+			// 	for (let i = 1; i < ball[n].xData.length; i ++) {
+			// 		ctx.strokeStyle = ball[n].color;
+			// 		ctx.beginPath();
+			// 		ctx.arc(ball[n].xData[i], ball[n].yData[i], ball[n].r, 0, 2 * Math.PI);
+			// 		ctx.stroke();
+			// 	}
+			// }
+
+
+			//Timer
+			ctx.font = '20px san-serif';
+			ctx.fillText('Time: ' + time.toFixed(2), 10, 25);
+
+			if (anime || animeOnce) {
+
+				if (animeOnce) animeOnce = false;
+
+				for (let n = 0; n < ball.length; n++) {
+					ball[n].x = ball[n].x + STEP * ball[n].vx;
+					ball[n].y = ball[n].y + STEP * ball[n].vy;
+					ball[n].vy = ball[n].vy + STEP * g;
+
+					if (ball[n].x - ball[n].r < 0) {
+						ball[n].x = ball[n].r;
+						ball[n].vx = -E * ball[n].vx;
+					} else if (ball[n].x + ball[n].r > canvas.width) {
+						ball[n].x = canvas.width - ball[n].r;
+						ball[n].vx = -E * ball[n].vx;
+					}
+					if (ball[n].y - ball[n].r < 0) {
+						ball[n].y = ball[n].r;
+						ball[n].vy = -E * ball[n].vy;
+					} else if (ball[n].y + ball[n].r > canvas.height) {
+						ball[n].y = canvas.height - ball[n].r;
+						ball[n].vy = -E * ball[n].vy;
+					}
+
+
+
+					if (ball[n].xData.length < MAX_DATA) {
+						ball[n].xData.push(ball[n].x);
+						ball[n].yData.push(ball[n].y);
+					}
+				}
+				//Timer
+				time += STEP;
+
+				requestAnimationFrame(draw);
+			}
+		}
+
+		function startAnime() {
+			if (anime) {
+				anime = false;
+				document.getElementById('btnAnime').value = 'Restart Anime';
+				document.getElementById('btnStep').disabled = false;
+			}
+			else {
+				anime = true;
+				document.getElementById('btnAnime').value = 'Stop Anime';
+				document.getElementById('btnStep').disabled = true;
+				draw();
+			}
+		}
+
+		//Once Step 
+		function stepOnce() {
+			animeOnce = true;
+			draw();
+		}
+
+		init();
+	</script>
+
+
+	<h3>課題二</h3>
+	<p></p>
+	オイラー法による計算の誤差では,時間間隔が大きならば,誤差が大きくなくことがわかる.つまりボール
+	の「正しい」軌跡では時間間隔を小さいほど正しくなるので,現在の軌跡のとともに,時間間隔を100倍以上に
+	小さくした軌跡を表示するとオイラー法による計算の誤差を確認できるようになると考えている.
+
+	まだ実際に「正しい軌跡」と誤差軌跡を一緒に書くするのは誤差が時間間隔により人間に見辛いこ
+	とがあると考えている.
+	</p>
+</body>
+
+
+
+</html>

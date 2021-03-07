@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<title>教育システムデザイン第６回</title>
+</head>
+
+<bovy>
+	<h1>教育システムデザイン　第６回</h1>
+	<canvas id="myCanvas" width="600" height="400"></canvas>
+
+	<br>
+	<input type="button" id="btnAnime" value="Start Animation" onclick="startAnime()">
+	<input type="button" id="reAnime" value="Reset Animation" onclick="ResetAnime()">
+
+	<script>
+		//[定数]const PI = 3.14;
+		//let a = 10;
+
+		const canvas = document.getElementById('myCanvas');
+		const ctx = canvas.getContext('2d');
+
+		let x = 100, y = 100; //球得中心座標
+		let vx = 6, vy = 3;
+		const RADIUS = 20; //半徑
+
+		let anime = false; //animation flag
+
+		function draw() {
+
+			//canvas reset
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+			//畫線
+
+			ctx.strokeRect(0, 0, canvas.width, canvas.height);
+
+			//園
+			ctx.beginPath();
+			ctx.arc(x, y, RADIUS, 0, 2 * Math.PI);
+			ctx.fill();
+
+			if (anime) {
+
+				if (x + vx + RADIUS > canvas.width  || x + vx - RADIUS< 0) {
+					vx = -vx;
+				}
+				if (y + vy + RADIUS > canvas.height  || y + vy - RADIUS < 0) {
+					vy = -vy;
+				}
+
+				x += vx;
+				y += vy;
+			}
+			requestAnimationFrame(draw);
+
+			/*
+			//長方形
+			ctx.strokeRect(100, 100, 50, 100);
+			ctx.fillRect(200, 100, 50, 100);
+
+			//path 
+			ctx.beginPath();
+			ctx.moveTo(150, 100);
+			ctx.lineTo(200, 200);
+			ctx.lineTo(100, 200);
+			ctx.closePath();
+			ctx.fill();
+			*/
+		}
+
+		function startAnime() {
+			if (anime) {
+				anime = false;
+				document.getElementById('btnAnime').value = 'Restart Anime';
+			}
+			else {
+				anime = true;
+				document.getElementById('btnAnime').value = 'Stop Anime';
+				draw();
+			}
+		}
+
+		function ResetAnime() {
+			x = 100;
+			y = 100;
+			vx = 3;
+			vy = 3;
+			anime = false;
+			draw();
+			document.getElementById('btnAnime').value = 'start Anime';
+		}
+
+		draw();
+
+
+	</script>
+</bovy>
+
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<!-- saved from url=(0030)https://t.kano.ac/e9_base.html -->
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+    <title>教育システムデザイン 第9回</title>
+</head>
+
+<body>
+    <h1>教育システムデザイン 第9回(行星運動)</h1>
+    <canvas id="myCanvas" width="600" height="400"></canvas>
+    <br>
+    <input type="button" id="btnAnime" value="アニメーション開始" onclick="startAnime()">
+    <input type="button" id="btnStep" value="1ステップ進む" onclick="stepOnce()">
+    <input type="button" id="btnReset" value="リセット" onclick="init()">
+    <script>
+        const canvas = document.getElementById('myCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let x, y, pos, vel;    //座標,速度
+        const G = 6.7;          // 萬有引力
+        const M = 10000;        //太陽質量（假設）
+        const STEP = 0.1;       // 時間刻み幅
+        let time;               // 経過時間
+        let rData, thetaData;       //座標data
+        const MAX_DATA = 500;   //最大Data數
+
+        let anime;              // アニメーションフラグ
+        let animeOnce;          // 1ステップアニメーションフラグ
+
+        // 初期化処理
+        function init() {
+            anime = false;
+            animeOnce = false;
+            time = 0;
+
+            //座標,速度的初期化処理
+            pos_r_init = 100; pos_theta_init = 0;
+            vel_r_init = 0; vel_theta_init = 0.3;
+
+            pos = { r: pos_r_init, theta: pos_theta_init, rEuler: pos_r_init, thetaEuler: pos_theta_init, rPrev: pos_r_init, thetaPrev: pos_theta_init };
+            vel = { r: vel_r_init, theta: vel_theta_init, rEuler: vel_r_init, thetaEuler: vel_theta_init, rPrev: vel_r_init, thetaPrev: vel_theta_init };
+
+            rData = [pos.r]; thetaData = [pos.theta];
+            document.getElementById('btnAnime').value = 'アニメーション開始';
+            document.getElementById('btnStep').disabled = false;
+            draw();
+        }
+
+        // 描画処理
+        function draw() {
+            // キャンバスのリセット
+            //ctx.fillStyle = 'rgba(255,255,255,0.01';
+            //ctx.fillRect(0, 0, canvas.width, canvas.height);
+            //ctx.fillStyle = 'black';
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 枠線の描画
+            ctx.strokeStyle = 'black';
+            ctx.strokeRect(0, 0, canvas.width, canvas.height);
+
+            //行星的描畫
+            x = pos.r * Math.cos(pos.theta);
+            y = pos.r * Math.sin(pos.theta);
+            ctx.beginPath();
+            ctx.fillStyle = 'blue';
+            ctx.arc(canvas.width / 2 + x, canvas.height / 2 + y,
+                10, 0, 2 * Math.PI);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.fillStyle = 'red';
+            ctx.arc(canvas.width / 2, canvas.height / 2, 20, 0, 2 * Math.PI);
+            ctx.fill();
+
+            
+            //行星軌道的描畫
+            //軌跡data的紀錄
+            rData.push(x);
+            thetaData.push(y);
+                if(rData.length >= MAX_DATA){
+                    rData.shift();
+                    thetaData.shift();
+                }
+            
+            let trageLength = 450;
+            for (let i = Math.max(0,rData.length - trageLength); 
+                i < rData.length; i++){
+                    ctx.beginPath();
+                    ctx.fillStyle = 'rgba(255,255,255,0.01';
+                    ctx.arc(canvas.width / 2 + rData[i], canvas.height / 2 + thetaData[i] , 0.5 , 0 , 2*Math.PI);
+                    ctx.fillStyle = 'black';
+                    ctx.stroke();
+                }
+
+            
+
+
+
+            // 経過時間の描画
+            ctx.fillStyle = 'black';
+            ctx.font = '20px san-serif';
+            ctx.fillText('Time: ' + time.toFixed(2), 10, 25);
+
+            if (anime || animeOnce) {
+                if (animeOnce) animeOnce = false;
+
+            
+                pos.rEuler = pos.rPrev + STEP * vel.rPrev;
+
+                vel.rEuler = vel.rPrev + STEP * 
+                    (pos.rPrev * vel.thetaPrev * vel.thetaPrev - G * M / (pos.rPrev * pos.rPrev));
+
+
+                pos.thetaEuler = pos.thetaPrev + STEP * vel.thetaPrev;
+
+                vel.thetaEuler = vel.thetaPrev + STEP * (-2 * vel.rPrev * vel.thetaPrev / pos.rPrev);
+
+                //極座標的更新(修正オイラー法)
+                
+                pos.r = pos.rPrev + 0.5 * STEP * (vel.rPrev + vel.rEuler);
+
+                pos.theta = pos.thetaPrev + 0.5 * STEP * (vel.thetaPrev + vel.thetaEuler);
+
+
+                vel.r = vel.rPrev + 0.5 * STEP * 
+                    ((pos.rPrev * vel.thetaPrev * vel.thetaPrev - G * M / (pos.rPrev * pos.rPrev)) + (pos.rEuler * vel.thetaEuler* vel.thetaEuler - G * M / (pos.rEuler * pos.rEuler)));
+
+                vel.theta = vel.thetaPrev + 0.5 * STEP *
+                    ((-2 * vel.rPrev * vel.thetaPrev / pos.rPrev) + (-2 * vel.rEuler * vel.thetaEuler / pos.rEuler));
+
+                //速度的更新
+
+                /*
+                copy
+                vel.r = vel.r + STEP *
+                    (pos.r * vel.theta * vel.theta - G * M / (pos.r * pos.r));
+
+                vel.theta = vel.theta + STEP * (-2 * vel.r * vel.theta / pos.r);
+                */
+                //值的更新
+                pos.rPrev = pos.r;
+                pos.thetaPrev = pos.theta;
+
+                vel.thetaPrev = vel.theta;
+                vel.rPrev = vel.r;
+                
+
+                // 経過時間・経過フレームの計算
+                time += STEP;
+
+                // 描画の更新
+                requestAnimationFrame(draw);
+            }
+        }
+
+        // アニメーション開始ボタンが押されたとき
+        function startAnime() {
+            if (anime) {
+                anime = false;
+                document.getElementById('btnAnime').value = 'アニメーション再開';
+                document.getElementById('btnStep').disabled = false;
+            } else {
+                anime = true;
+                document.getElementById('btnAnime').value = 'アニメーション停止';
+                document.getElementById('btnStep').disabled = true;
+                draw();
+            }
+        }
+
+        // 1ステップ進むボタンが押されたとき
+        function stepOnce() {
+            animeOnce = true;
+            draw();
+        }
+
+        init();
+    </script>
+</body>
+
+</html>
